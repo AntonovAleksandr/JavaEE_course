@@ -1,182 +1,148 @@
 package ui;
 
-import dao.DAOManager;
-import domains.*;
-import domains.Log;
-import ui.menu.*;
+import data.dao.DAOManager;
+import data.dao.PosgreSQLConnector;
+import data.entity.*;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.sql.Date;
 
 public class ConsoleManager {
     private Scanner scanner = new Scanner(System.in);
-    private DAOManager daoManager = new DAOManager();
-    private Menu menu;
+    protected final DAOManager daoManager;
 
-    public void start() {
-        while (true) {
-            chooseMenu();
-        }
+    public ConsoleManager(PosgreSQLConnector posgreSQLConnector) {
+        this.daoManager = new DAOManager(posgreSQLConnector);
     }
+
 
     int showInterface() {
         System.out.println("\nWelcome to our newsagent, сhoose one of the actions:" +
-                "\n1 - Show product catalog | 2 - Show purchase history | 3 - Take procurement" +
-                "\n4 - Dispose products     | 5 - Show profit           | 6 - Search of publication" +
-                "                             7 - Exit");
+                "\n1 - Show product catalog | 2 - By product     | 3 - Delete product" +
+                "\n4 - Add products         | 5 - Update product");
         return scanner.nextInt();
     }
 
-
-    private void chooseMenu() {
-        switch (showInterface()) {
+    private void chooseСatalogAction() {
+        System.out.println("\n1 - Show all products  | 2 - Show all books" +
+                "\n3 - Show all newspapers | 4 - Show all magazines" +
+                "\n5 - Return              | 6 - Exit");
+        int action = scanner.nextInt();
+        String result = "";
+        switch (action) {
             case 1:
-                menu = new CatalogMenu(scanner, daoManager);
+                for (var publication : daoManager.getAllPublications()) {
+                    result += publication.toString();
+                }
                 break;
             case 2:
-                menu = new HistoryMenu(scanner, daoManager);
+                for (var publication : daoManager.getAllBooks()) {
+                    result += publication.toString();
+                }
                 break;
             case 3:
-                menu = new ProcurementMenu(scanner, daoManager);
+                for (var publication : daoManager.getAllNewspapers()) {
+                    result += publication.toString();
+                }
                 break;
             case 4:
-                menu = new DisposePublicationMenu(scanner, daoManager);
-            case 5:
-                menu = new ProcurementMenu(scanner, daoManager);
+                for (var publication : daoManager.getAllMagazines()) {
+                    result += publication.toString();
+                }
                 break;
-            case 6:
-                menu = new SearchMenu(scanner, daoManager);
-            case 7:
-                return;
-
         }
-        menu.ran();
+        System.out.println(result);
     }
 
-    private void subMenuSearchInterface() {
-        switch (subMenuSearchPublication()) {
+    private void buyPublicationAction() {
+        List<Publication> basket = new ArrayList<>();
+        System.out.println("\n1 - Book | 2 - Magazine | 3 - Newspaper");
+        int action = scanner.nextInt();
+        String type;
+        System.out.println("Publication id: ");
+        long id = scanner.nextLong();
+
+        switch (action) {
             case 1:
+                type = "book";
+                basket.add(daoManager.buyBId(id, type));
                 break;
             case 2:
+                type = "magazine";
+                basket.add(daoManager.buyBId(id, type));
                 break;
             case 3:
+                type = "newspaper";
+                basket.add(daoManager.buyBId(id, type));
                 break;
-            case 4:
-                break;
-            case 5:
-                break;
-            case 6:
         }
-
-    }
-
-//    private void subMenuProductInterface() {
-//        switch (subMenuProfit()) {
-//            case 1:
-//                System.out.println(DAOManager.checkBoxOffice());
-//                break;
-//            case 2:
-//                System.out.println(DAOManager.checkBoxOffice(inputTheDate()));
-//                break;
-//            case 3:
-//                return;
-//        }
-//    }
-
-
-//    private void subMenuInterface() {
-//        switch (subMenuProductCatalog()) {
-//            case 1:
-//                System.out.println(stringValue(DAOManager.getPublications()));
-//                break;
-//            case 2:
-//                System.out.println(stringValue(DAOManager.getNewspapers()));
-//                break;
-//            case 3:
-//                System.out.println(stringValue(DAOManager.getBooks()));
-//                break;
-//            case 4:
-//                System.out.println(stringValue(DAOManager.getNewspapers()));
-//                break;
-//            case 5:
-//                return;
-//        }
-//
-
-
-    int subMenuSearchPublication() {
-        System.out.println("\n1 - Search by author | 2 - Search by title | 3 - Search by publication house" +
-                "\n4 - Search by date   | 5 - combined search | 6 - Return");
-        return scanner.nextInt();
-    }
-
-
-    int subMenuPurchaseHistory() {
-        System.out.println("\n1 - Show all history | 2 - Show history on date | 3 - Return");
-        return scanner.nextInt();
-    }
-
-
-    int subMenuGetPublications() {
-        System.out.println("\n1 - Get new book  | 2 -  get new bagazine" +
-                "\n3 - bewspaper     | 4 - Return");
-        return scanner.nextInt();
-    }
-
-//    void getPublicationsInterface() {
-//        boolean flag = true;
-//        Publication newPublication;
-//        while (flag) {
-//            newPublication = inputPublication();
-//            System.out.println("Enter count of publications: ");
-//            DAOManager.takeProcurement(newPublication, scanner.nextInt());
-//            System.out.println("Choose action 1 - add another publication 2 - enough");
-//            if (scanner.nextInt() == 2) {
-//                flag = false;
-//            }
-//        }
-//    }
-
-
-//    int subMenuDisposeProducts() {
-//
-//    }
-
-    int subMenuProfit() {
-        System.out.println("\n1 - Calculate all profit | 2 - Calculate profit in date | 3 - Return");
-        return scanner.nextInt();
-
-    }
-
-    StringBuilder stringValue(Map<Publication, Integer> map) {
-        Publication publication;
-        StringBuilder result = new StringBuilder();
-        for (Map.Entry<Publication, Integer> element :
-                map.entrySet()) {
-            publication = element.getKey();
-            result.append("Title: ").append(publication.getTitle()).append(", count of pages: ").append(publication.getCountOfPages()).append(", date: ").append(publication.getData().toString()).append(", price: ").append(publication.getPrice().toString());
-            if (publication.getClass() == Book.class) {
-                result.append(", author: ").append(((Book) publication).getAuthor()).append(", publishing house: ").append(((Book) publication).getPublishingHouse());
-            }
-            if (publication.getClass() == Magazine.class) {
-                result.append(", number of magazine: ").append(((Magazine) publication).getNumber()).append(((Magazine) publication).getType());
-            }
-            if (publication.getClass() == Newspaper.class) {
-                result.append(", number of newspaper: ").append(((Newspaper) publication).getNumber());
-            }
-            result.append("| count:  ").append(element.getValue().toString());
-            result.append("\n");
+        for (var publication : basket) {
+            System.out.println(publication.toString());
         }
-        return result;
     }
 
-//    void showLog(List<Log> log) {
-//        log.forEach((record) -> System.out.println("Date: " + record.getDate().toString() + "\n basket:\n" + stringValue(record.getBasket()).toString() + "\n      price : " + record.getPrice().toString()));
-//    }
+    private void deletePublicationAction() {
+        List<Publication> basket = new ArrayList<>();
+        System.out.println("\n1 - Book | 2 - Magazine | 3 - Newspaper");
+        int action = scanner.nextInt();
+        String type;
+        System.out.println("Publication id: ");
+        Long id = scanner.nextLong();
 
-//    void showLogOnDate() {
-//        showLog(DAOManager.getLog(inputTheDate()));
-//    }
+        switch (action) {
+            case 1:
+                type = "book";
+                daoManager.deleteBId(id, type);
+                break;
+            case 2:
+                type = "magazine";
+                daoManager.deleteBId(id, type);
+                break;
+            case 3:
+                type = "newspaper";
+                daoManager.deleteBId(id, type);
+                break;
+        }
+    }
+
+
+    public void start() {
+        while (true) {
+            switch (showInterface()) {
+                case 1:
+                    chooseСatalogAction();
+                    break;
+                case 2:
+                    buyPublicationAction();
+                    break;
+                case 3:
+                    deletePublicationAction();
+                    break;
+                case 4:
+                    addPublicationAction();
+                case 5:
+                    updatePublicationAction();
+                    break;
+                case 6:
+                    return;
+            }
+
+        }
+    }
+
+    private void addPublicationAction() {
+        Publication publication = inputPublication();
+        daoManager.insertPublication(publication);
+    }
+
+    private void updatePublicationAction() {
+        Publication publication = inputPublication();
+        System.out.println("Publication id: ");
+        Long id = scanner.nextLong();
+        daoManager.update(publication, id);
+    }
+
 
     Date inputTheDate() {
         Calendar calendar = new GregorianCalendar();
@@ -193,7 +159,7 @@ public class ConsoleManager {
         System.out.println("Enter numbers of second: ");
         int second = scanner.nextInt();
         calendar.set(year, month, day, hour, minute, second);
-        return calendar.getTime();
+        return Date.valueOf(calendar.getTime().toString());
     }
 
     Publication inputPublication() {
@@ -202,7 +168,7 @@ public class ConsoleManager {
         System.out.println("Enter title of publication: ");
         String title = scanner.next();
         System.out.println("Enter count of pages: ");
-        int countOfPages = scanner.nextInt();
+        Long countOfPages = scanner.nextLong();
         Date date = inputTheDate();
         System.out.println("Enter price: ");
         BigDecimal price = new BigDecimal(scanner.nextInt());
@@ -218,27 +184,27 @@ public class ConsoleManager {
     }
 
 
-    Magazine inputMagazine(String title, int countOfPages, Date date, BigDecimal price) {
+    Magazine inputMagazine(String title, Long countOfPages, Date date, BigDecimal price) {
         System.out.println("Enter number of magazine: ");
-        int number = scanner.nextInt();
+        Long number = scanner.nextLong();
         System.out.println("Enter type of magazine: ");
         String type = scanner.next();
-        return new Magazine(title, countOfPages, number, type, price, date);
+        return new Magazine(title, countOfPages, price, date, number, type);
     }
 
-    Book inputBook(String title, int countOfPages, Date date, BigDecimal price) {
+    Book inputBook(String title, Long countOfPages, Date date, BigDecimal price) {
         System.out.println("Enter publication house: ");
         String publicationHouse = scanner.next();
         System.out.println("Enter author of book: ");
         String author = scanner.next();
 
-        return new Book(title, countOfPages, publicationHouse, author, price, date);
+        return new Book(title, countOfPages, price, publicationHouse, author, date);
     }
 
-    Newspaper inputNewspaper(String title, int countOfPages, Date date, BigDecimal price) {
+    Newspaper inputNewspaper(String title, Long countOfPages, Date date, BigDecimal price) {
         System.out.println("Enter number of newspaper: ");
-        int number = scanner.nextInt();
-        return new Newspaper(title, countOfPages, number, price, date);
+        Long number = scanner.nextLong();
+        return new Newspaper(title, countOfPages, price, date, number);
     }
 
 
